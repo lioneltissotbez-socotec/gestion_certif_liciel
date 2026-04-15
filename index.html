@@ -86,8 +86,9 @@
 
     .ltb-liciel-widget__grid {
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 1fr;
       gap: 20px;
+      align-items: start;
     }
 
     .ltb-liciel-widget__panel {
@@ -351,12 +352,6 @@
       align-items: center;
     }
 
-    .ltb-file-name-old {
-      font-size: 13px;
-      color: var(--ltb-muted);
-      word-break: break-word;
-    }
-
     .ltb-file-name {
       font-size: 13px;
       color: var(--ltb-muted);
@@ -367,12 +362,6 @@
       margin-top: 12px;
       display: flex;
       justify-content: flex-start;
-    }
-
-    .ltb-file-name-old {
-      font-size: 13px;
-      color: var(--ltb-muted);
-      word-break: break-word;
     }
 
     .ltb-checkbox-grid {
@@ -795,24 +784,27 @@
     async function scanDomains() {
       if (!state.attestationsHandle) return;
       revokeAllObjectUrls();
+
+      const EXPECTED_DOMAIN_FILES = [
+        'Attestation Amiante',
+        'Attestation Audit',
+        'Attestation DPE Mention',
+        'Attestation DPE Simple',
+        'Attestation Elec',
+        'Attestation Gaz',
+        'Attestation General',
+        'Attestation Plomb',
+        'Attestation Termite'
+      ];
+
       const domains = [];
-      const folderNames = [];
-      for await (const [name, handle] of state.attestationsHandle.entries()) {
-        if (handle.kind === 'directory') {
-          folderNames.push(name);
-        }
-      }
 
-      folderNames.sort((a, b) => a.localeCompare(b, 'fr'));
-
-      for (const baseName of folderNames) {
+      for (const baseName of EXPECTED_DOMAIN_FILES) {
         const pdfName = baseName + '.pdf';
         const jpgName = baseName + '.jpg';
         const folderHandle = await existsDir(state.attestationsHandle, baseName);
-        if (!folderHandle) continue;
-
         const pdfHandle = await existsFile(state.attestationsHandle, pdfName);
-        const jpgHandle = await existsFile(folderHandle, jpgName);
+        const jpgHandle = folderHandle ? await existsFile(folderHandle, jpgName) : null;
 
         let previewUrl = '';
         let pdfUrl = '';
@@ -859,10 +851,9 @@
       renderDomains();
       renderAssignments();
       renderSummary();
-      const hasDomains = domains.length > 0;
-      el.addAssignmentBtn.disabled = !hasDomains;
-      el.buildSummaryBtn.disabled = !hasDomains;
-      setStatus(hasDomains ? domains.length + ' domaine(s) trouvé(s).' : 'Aucun sous-dossier d’attestation trouvé.', hasDomains ? 'success' : 'error');
+      el.addAssignmentBtn.disabled = false;
+      el.buildSummaryBtn.disabled = false;
+      setStatus(domains.length + ' domaine(s) attendu(s) affiché(s).', 'success');
     }
 
     function formatDate(ts) {
@@ -899,7 +890,7 @@
       el.domainList.innerHTML = state.domains.map(domain => {
         const previewBlock = domain.previewUrl
           ? `<img src="${domain.previewUrl}" alt="Prévisualisation ${escapeHtml(domain.baseName)}" />${domain.baseName.toLowerCase().includes('general') ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:#fff;font-size:12px;padding:6px;text-align:center;">Utilisez l\'attestation General pour joindre le titre professionnel industrie.</div>' : ''}`
-          : `<div class="ltb-domain-card__empty">Attestation attendue</div>`;
+          : `<div class="ltb-domain-card__empty">Attestation absente</div>`;
 
         const tags = [];
         tags.push(`<span class="ltb-tag">${domain.pdfHandle ? 'PDF présent' : 'PDF absent'}</span>`);
