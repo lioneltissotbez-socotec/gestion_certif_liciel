@@ -304,6 +304,27 @@
     }
     .ltb-eye-btn:hover { background: rgba(11,99,206,0.85); }
 
+    .ltb-del-btn {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      padding: 0;
+      line-height: 1;
+    }
+    .ltb-del-btn:hover { background: rgba(198,40,40,0.85); }
+
     /* Badge overlay Titre Pro */
     .ltb-domain-card__overlay {
       position: absolute;
@@ -1093,18 +1114,19 @@
       el.domainList.innerHTML = state.domains.map(domain => {
         const isTitrePro = TITRE_PRO_NAMES.includes(domain.baseName);
 
-        // Thumbnail avec icône œil si PDF disponible
+        // Thumbnail avec icône œil si PDF disponible + bouton poubelle
         const eyeBtn = domain.pdfUrl
           ? `<button class="ltb-eye-btn" data-action="view-pdf" data-domain="${escapeHtml(domain.baseName)}" title="Voir le PDF">👁</button>`
           : '';
+        const delBtn = `<button class="ltb-del-btn" data-action="delete-domain" data-domain="${escapeHtml(domain.baseName)}" title="Supprimer">🗑</button>`;
 
         const overlayBadge = isTitrePro
           ? `<div class="ltb-domain-card__overlay">Fusion avec Amiante</div>`
           : '';
 
         const previewBlock = domain.previewUrl
-          ? `<img src="${domain.previewUrl}" alt="${escapeHtml(domain.baseName)}" />${eyeBtn}${overlayBadge}`
-          : `<div class="ltb-domain-card__empty">${isTitrePro ? 'Aucun Titre Pro' : 'Absent'}</div>${eyeBtn}`;
+          ? `<img src="${domain.previewUrl}" alt="${escapeHtml(domain.baseName)}" />${eyeBtn}${delBtn}${overlayBadge}`
+          : `<div class="ltb-domain-card__empty">${isTitrePro ? 'Aucun Titre Pro' : 'Absent'}</div>${eyeBtn}${delBtn}`;
 
         // Tags simplifiés : statut PDF + nombre de JPEGs
         const pdfTag  = `<span class="ltb-tag ${domain.pdfHandle ? 'ltb-tag--ok' : 'ltb-tag--ko'}">${domain.pdfHandle ? '✓ PDF' : '✗ PDF'}</span>`;
@@ -1663,10 +1685,94 @@
       }
     });
 
+    // =========================================================
+    // REFUSION AMIANTE APRÈS SUPPRESSION D'UN TITRE PRO
+    // Lit la source propre + Titre Pro encore présents sur disque
+    // =========================================================
+    async function refuseAmianteAfterDeletion(deletedName) {
+      const TITRE_PRO_ORDER = ['Titre Pro Industrie', 'Titre Pro 46-102', 'Titre Pro Ferroviaire', 'Titre Pro Aeronef'];
+
+      // Lecture de la source Amiante propre
+      const sourceHandle = await existsFile(state.sourcesHandle, 'Attestation Amiante_source.pdf');
+      if (!sourceHandle) {
+        setStatus('Refusion impossible : Attestation Amiante_source.pdf introuvable dans Attestations_sources/. Rechargez votre Amiante.', 'error');
+        return;
+      }
+      const amianteBitmaps = await renderPdfToPageBitmaps(await sourceHandle.getFile());
+
+      // Titre Pro encore présents sur disque (excluant celui qu'on vient de supprimer)
+      const remainingBitmaps = [];
+      for (const tpName of TITRE_PRO_ORDER) {
+        if (tpName === deletedName) continue;
+        const tpPdfHandle = await existsFile(state.attestationsHandle, tpName + '.pdf');
+        if (tpPdfHandle) {
+          const bitmaps = await renderPdfToPageBitmaps(await tpPdfHandle.getFile());
+          remainingBitmaps.push(...bitmaps);
+        }
+      }
+
+      const allBitmaps = [...amianteBitmaps, ...remainingBitmaps];
+      const mergedPdf  = await createMultiPagePdfBlob(allBitmaps);
+      await writeBlobToFile(state.attestationsHandle, 'Attestation Amiante.pdf', mergedPdf);
+
+      // Réécriture des JPEGs numérotés dans le sous-dossier Amiante
+      const amianteFolder = await existsDir(state.attestationsHandle, 'Attestation Amiante');
+      if (amianteFolder) {
+        await clearDirectory(amianteFolder);
+        for (let p = 0; p < allBitmaps.length; p++) {
+          await writeBlobToFile(amianteFolder, `Attestation Amiante_${p + 1}.jpg`, await bitmapToJpegBlob(allBitmaps[p]));
+        }
+      }
+    }
+
+    // =========================================================
+    // SUPPRESSION D'UN DOMAINE (PDF racine + JPEGs sous-dossier)
+    // =========================================================
+    async function deleteDomain(baseName) {
+      const TITRE_PRO_NAMES = ['Titre Pro Industrie', 'Titre Pro 46-102', 'Titre Pro Ferroviaire', 'Titre Pro Aeronef'];
+      const isTitrePro = TITRE_PRO_NAMES.includes(baseName);
+
+      const msg = isTitrePro
+        ? `Supprimer "${baseName}" ?\n\nL'Attestation Amiante sera automatiquement refusionnée sans ce Titre Pro.`
+        : `Supprimer "${baseName}" ?\n\nLe PDF et les JPEGs seront effacés définitivement.`;
+
+      if (!confirm(msg)) return;
+
+      try {
+        showLoading(`Suppression de ${baseName}…`);
+        updateLoading(`Suppression de ${baseName}…`, 20);
+
+        // Supprime le PDF racine
+        try { await state.attestationsHandle.removeEntry(baseName + '.pdf'); } catch { /* déjà absent */ }
+
+        // Vide le sous-dossier
+        const folder = await existsDir(state.attestationsHandle, baseName);
+        if (folder) await clearDirectory(folder);
+
+        // Si Titre Pro → refusion de l'Amiante
+        if (isTitrePro) {
+          updateLoading('Refusion de l\'Attestation Amiante…', 50);
+          await refuseAmianteAfterDeletion(baseName);
+        }
+
+        updateLoading('Actualisation…', 90);
+        await scanDomains();
+        updateLoading('Terminé !', 100);
+        await new Promise(r => setTimeout(r, 300));
+        hideLoading();
+        setStatus(`"${baseName}" supprimé${isTitrePro ? ' — Attestation Amiante refusionnée.' : '.'}`, 'success');
+      } catch (err) {
+        hideLoading();
+        setStatus('Erreur lors de la suppression : ' + err.message, 'error');
+      }
+    }
+
     el.domainList.addEventListener('click', event => {
-      const button = event.target.closest('button[data-action="view-pdf"]');
-      if (!button) return;
-      openPdfModal(button.dataset.domain);   // CORRECTION BUG 2 : appelle la version corrigée
+      const pdfBtn = event.target.closest('button[data-action="view-pdf"]');
+      if (pdfBtn) { openPdfModal(pdfBtn.dataset.domain); return; }
+
+      const delBtn = event.target.closest('button[data-action="delete-domain"]');
+      if (delBtn) { deleteDomain(delBtn.dataset.domain); }
     });
 
     el.closePdfBtn.addEventListener('click', closePdfModal);
