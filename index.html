@@ -685,17 +685,7 @@
         </div>
         <div class="ltb-assignment-list" id="ltbAssignmentList"></div>
         <div class="ltb-liciel-widget__actions" style="margin-top:14px;">
-          <button class="ltb-btn ltb-btn--secondary" id="ltbBuildSummaryBtn" disabled>Valider le remplacement</button>
-        </div>
-        <div class="ltb-summary ltb-hidden" id="ltbSummaryBox">
-          <div class="ltb-summary__title">Résumé avant remplacement</div>
-          <div class="ltb-summary__list" id="ltbSummaryList"></div>
-          <div class="ltb-note" style="margin-top:12px;">
-            Les fichiers existants seront écrasés uniquement après confirmation.
-          </div>
-          <div class="ltb-liciel-widget__actions" style="margin-top:14px; margin-bottom:0;">
-            <button class="ltb-btn ltb-btn--danger" id="ltbExecuteBtn">Confirmer et remplacer</button>
-          </div>
+          <button class="ltb-btn ltb-btn--danger" id="ltbBuildSummaryBtn" disabled>Valider le remplacement</button>
         </div>
       </section>
 
@@ -822,6 +812,7 @@
       assignmentPreviewUrls: new Map(),
       selectedHandle: null,
       attestationsHandle: null,
+      sourcesHandle: null,
       domains: [],
       assignments: [],
       summaryPlan: null,
@@ -841,9 +832,6 @@
       addAssignmentBtn:   document.getElementById('ltbAddAssignmentBtn'),
       buildSummaryBtn:    document.getElementById('ltbBuildSummaryBtn'),
       assignmentList:     document.getElementById('ltbAssignmentList'),
-      summaryBox:         document.getElementById('ltbSummaryBox'),
-      summaryList:        document.getElementById('ltbSummaryList'),
-      executeBtn:         document.getElementById('ltbExecuteBtn'),
       confirmModal:       document.getElementById('ltbConfirmModal'),
       confirmBody:        document.getElementById('ltbConfirmBody'),
       cancelConfirmBtn:   document.getElementById('ltbCancelConfirmBtn'),
@@ -981,6 +969,9 @@
       if (!state.attestationsHandle) return;
       revokeAllObjectUrls();
 
+      // Crée ou ouvre le dossier Attestations_sources (invisible pour LICIEL, utilisé par l'app)
+      state.sourcesHandle = await getOrCreateDir(state.attestationsHandle, 'Attestations_sources');
+
       const EXPECTED_DOMAIN_FILES = [
         'Attestation Amiante',
         'Attestation Plomb',
@@ -1060,7 +1051,6 @@
       state.summaryPlan = null;
       renderDomains();
       renderAssignments();
-      renderSummary();
       el.addAssignmentBtn.disabled = false;
       el.buildSummaryBtn.disabled = false;
       setStatus(domains.length + ' domaine(s) attendu(s) affiché(s).', 'success');
@@ -1355,21 +1345,6 @@
       return items;
     }
 
-    function renderSummary() {
-      if (!state.summaryPlan?.length) {
-        el.summaryBox.classList.add('ltb-hidden');
-        el.summaryList.innerHTML = '';
-        return;
-      }
-      el.summaryList.innerHTML = state.summaryPlan.map(item => `
-        <div class="ltb-summary__item">
-          <strong>${escapeHtml(item.domainName)}</strong><br>
-          Source : ${escapeHtml(item.fileName)}${item.fileType ? ' — ' + escapeHtml(item.fileType) : ''}<br>
-          Action : remplacement du PDF racine et du JPEG du sous-dossier
-        </div>`).join('');
-      el.summaryBox.classList.remove('ltb-hidden');
-    }
-
     // =========================================================
     // MODALS CONFIRMATION + PDF
     // =========================================================
@@ -1474,15 +1449,25 @@
           }
         }
 
-        // --- Étape 2 : Source Amiante (nouveau fichier OU PDF existant sur disque)
+        // --- Étape 2 : Source Amiante propre (pages brutes sans Titre Pro)
         updateLoading('Chargement de la source Amiante…', prog); prog += 6;
         let amianteBitmaps;
         if (amianteItem) {
+          // Nouvelle Amiante assignée → on rend ses pages ET on sauvegarde la source propre
           amianteBitmaps = await renderPdfToPageBitmaps(amianteItem.file);
+          const isPdf = amianteItem.file.type === 'application/pdf' || amianteItem.file.name.toLowerCase().endsWith('.pdf');
+          const sourcePdfBlob = isPdf
+            ? amianteItem.file.slice(0, amianteItem.file.size, 'application/pdf')
+            : await createMultiPagePdfBlob(amianteBitmaps);
+          await writeBlobToFile(state.sourcesHandle, 'Attestation Amiante_source.pdf', sourcePdfBlob);
         } else {
-          const amianteDomain = state.domains.find(d => d.baseName === 'Attestation Amiante');
-          if (!amianteDomain?.pdfHandle) throw new Error('Attestation Amiante introuvable pour la fusion.');
-          amianteBitmaps = await renderPdfToPageBitmaps(await amianteDomain.pdfHandle.getFile());
+          // Pas de nouvelle Amiante → on lit la source propre sauvegardée
+          const sourceHandle = await existsFile(state.sourcesHandle, 'Attestation Amiante_source.pdf');
+          if (!sourceHandle) throw new Error(
+            'Aucune source Amiante trouvée dans Attestations_sources/.\n' +
+            'Veuillez charger votre Attestation Amiante au moins une fois pour initialiser la source propre.'
+          );
+          amianteBitmaps = await renderPdfToPageBitmaps(await sourceHandle.getFile());
         }
 
         // --- Étape 3 : Bitmaps des Titre Pro existants sur disque (non assignés cette session)
@@ -1548,7 +1533,6 @@
       hideLoading();
 
       state.summaryPlan = null;
-      renderSummary();
 
       setStatus('Remplacement terminé avec succès. Utilisez le bloc 5 pour valider et transmettre.', 'success');
 
@@ -1595,6 +1579,7 @@
         state.licielRootHandle   = licielRootHandle;
         state.attestationsHandle = attestationsHandle;
         state.signaturesHandle   = signaturesHandle;
+        // sourcesHandle est initialisé dans scanDomains() via getOrCreateDir
 
         el.pathDisplay.textContent = 'Dossier source détecté : C:\\LICIEL_Diagnostics';
         setStatus('Dossier détecté. Analyse automatique en cours…', 'info');
@@ -1616,7 +1601,6 @@
         state.assignments = state.assignments.filter(a => a.id !== id);
         state.summaryPlan = null;
         renderAssignments();
-        renderSummary();
         return;
       }
       if (event.target.closest('button[data-action="add-next-assignment"]')) addAssignment();
@@ -1629,7 +1613,6 @@
       const assignment = findAssignment(id);
       if (!assignment) return;
       state.summaryPlan = null;
-      renderSummary();
 
       if (action === 'pick-file') {
         const file = target.files?.[0] || null;
@@ -1656,21 +1639,11 @@
     el.buildSummaryBtn.addEventListener('click', () => {
       try {
         state.summaryPlan = buildSummaryPlan();
-        renderSummary();
-        setStatus('Résumé prêt. Vérifiez les remplacements avant confirmation.', 'success');
+        openConfirmModal(); // ouvre directement le modal, sans récap intermédiaire
       } catch (error) {
         state.summaryPlan = null;
-        renderSummary();
         setStatus(error.message || 'Impossible de préparer le résumé.', 'error');
       }
-    });
-
-    el.executeBtn.addEventListener('click', () => {
-      if (!state.summaryPlan?.length) {
-        setStatus('Validez d\'abord le remplacement avant de confirmer.', 'error');
-        return;
-      }
-      openConfirmModal();
     });
 
     el.cancelConfirmBtn.addEventListener('click', closeConfirmModal);
