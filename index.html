@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion locale des attestations</title>
+  <style>
+    /* ===== LICIEL ATTESTATIONS WIDGET - CSS FULLY NAMESPACED ===== */
+    .ltb-liciel-widget,
+    .ltb-liciel-widget * {
+      box-sizing: border-box;
+    }
+
+    .ltb-liciel-widget {
+      --ltb-bg: #f6f8fb;
+      --ltb-panel: #ffffff;
+      --ltb-border: #d9e2ec;
+      --ltb-text: #1f2937;
+      --ltb-muted: #6b7280;
+      --ltb-primary: #0b63ce;
+      --ltb-primary-dark: #084b9c;
+      --ltb-success: #198754;
+      --ltb-warning: #b7791f;
+      --ltb-danger: #c62828;
+      --ltb-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      width: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ltb-text);
+      background: var(--ltb-bg);
+      border: 1px solid var(--ltb-border);
+      border-radius: 16px;
+      padding: 20px;
+      line-height: 1.4;
+    }
+
+    .ltb-liciel-widget h1,
+    .ltb-liciel-widget h2,
+    .ltb-liciel-widget h3,
+    .ltb-liciel-widget p,
+    .ltb-liciel-widget ul,
+    .ltb-liciel-widget li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .ltb-liciel-widget button,
+    .ltb-liciel-widget input,
+    .ltb-liciel-widget select,
+    .ltb-liciel-widget textarea {
+      font: inherit;
+    }
+
+    .ltb-liciel-widget__header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .ltb-liciel-widget__title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .ltb-liciel-widget__subtitle {
+      color: var(--ltb-muted);
+      max-width: 900px;
+    }
+
+    .ltb-liciel-widget__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef5ff;
+      border: 1px solid #c9defa;
+      color: var(--ltb-primary-dark);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ltb-liciel-widget__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .ltb-liciel-widget__panel {
+      background: var(--ltb-panel);
+      border: 1px solid var(--ltb-border);
+      border-radius: 16px;
+      box-shadow: var(--ltb-shadow);
+      padding: 18px;
+    }
+
+    .ltb-liciel-widget__panel + .ltb-liciel-widget__panel {
+      margin-top: 20px;
+    }
+
+    /* Annule le margin-top automatique quand les panels sont dans une grille côte à côte */
+    .ltb-side-by-side > .ltb-liciel-widget__panel {
+      margin-top: 0 !important;
+    }
+
+    .ltb-liciel-widget__panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .ltb-liciel-widget__panel-desc {
+      color: var(--ltb-muted);
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    .ltb-liciel-widget__info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .ltb-liciel-widget__pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--ltb-border);
+      background: #f8fafc;
+      font-size: 13px;
+    }
+
+    .ltb-liciel-widget__path {
+      word-break: break-all;
+      font-family: Consolas, Monaco, monospace;
+      background: #0f172a;
+      color: #e5eefb;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .ltb-liciel-widget__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .ltb-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .ltb-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .ltb-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .ltb-btn--primary {
+      background: var(--ltb-primary);
+      color: #fff;
+    }
+
+    .ltb-btn--primary:hover {
+      background: var(--ltb-primary-dark);
+    }
+
+    .ltb-btn--secondary {
+      background: #eef2f7;
+      color: var(--ltb-text);
+      border: 1px solid var(--ltb-border);
+    }
+
+    .ltb-btn--danger {
+      background: #fff1f2;
+      color: var(--ltb-danger);
+      border: 1px solid #fecdd3;
+    }
+
+    .ltb-btn--success {
+      background: #eefbf4;
+      color: #166534;
+      border: 1px solid #bbe6ca;
+    }
+
+    .ltb-note {
+      border-left: 4px solid var(--ltb-warning);
+      background: #fff9ec;
+      color: #6b4e16;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .ltb-status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .ltb-status.is-visible {
+      display: block;
+    }
+
+    .ltb-status--info {
+      background: #eef6ff;
+      color: #114a83;
+      border: 1px solid #cfe2ff;
+    }
+
+    .ltb-status--success {
+      background: #eefbf4;
+      color: #166534;
+      border: 1px solid #bbe6ca;
+    }
+
+    .ltb-status--error {
+      background: #fff1f2;
+      color: #991b1b;
+      border: 1px solid #fecdd3;
+    }
+
+    .ltb-domain-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      grid-auto-rows: 210px;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .ltb-domain-card {
+      border: 1px solid var(--ltb-border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .ltb-domain-card__preview {
+      height: 150px;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--ltb-border);
+      position: relative;
+    }
+
+    .ltb-domain-card__preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Bouton œil sur le thumbnail */
+    .ltb-eye-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      padding: 0;
+      line-height: 1;
+    }
+    .ltb-eye-btn:hover { background: rgba(11,99,206,0.85); }
+
+    .ltb-del-btn {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      padding: 0;
+      line-height: 1;
+    }
+    .ltb-del-btn:hover { background: rgba(198,40,40,0.85); }
+
+    .ltb-add-quick-btn {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(25,135,84,0.85);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      padding: 0;
+      line-height: 1;
+      font-weight: 700;
+    }
+    .ltb-add-quick-btn:hover { background: rgba(15,100,60,0.95); }
+
+    /* Badge overlay Titre Pro */
+    .ltb-domain-card__overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(11,99,206,0.82);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 6px;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .ltb-domain-card__empty {
+      color: var(--ltb-muted);
+      text-align: center;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    .ltb-domain-card__body {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ltb-domain-card__name {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .ltb-domain-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .ltb-tag {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #eef2f7;
+      border: 1px solid var(--ltb-border);
+      color: #334155;
+    }
+    .ltb-tag--ok { background:#eefbf4; border-color:#bbe6ca; color:#166534; }
+    .ltb-tag--ko { background:#fff1f2; border-color:#fecdd3; color:#991b1b; }
+    .ltb-tag--info { background:#eef5ff; border-color:#c9defa; color:#084b9c; }
+
+    .ltb-assignment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ltb-assignment {
+      border: 1px solid var(--ltb-border);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .ltb-assignment__head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .ltb-assignment__title {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .ltb-field {
+      margin-bottom: 12px;
+    }
+
+    .ltb-field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .ltb-file-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .ltb-file-name {
+      font-size: 13px;
+      color: var(--ltb-muted);
+      word-break: break-word;
+    }
+
+    .ltb-add-inline {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .ltb-checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .ltb-checkbox {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--ltb-border);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      min-height: 56px;
+    }
+
+    .ltb-checkbox input {
+      margin-top: 3px;
+      flex: 0 0 auto;
+    }
+
+    .ltb-checkbox span {
+      font-size: 13px;
+    }
+
+    .ltb-summary {
+      margin-top: 14px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 14px;
+    }
+
+    .ltb-summary__title {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .ltb-summary__list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .ltb-summary__item {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid var(--ltb-border);
+    }
+
+    /* ===== MODAL BASE ===== */
+    .ltb-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 999999;
+    }
+
+    .ltb-modal.is-open {
+      display: flex;
+    }
+
+    .ltb-modal__dialog {
+      width: min(760px, 100%);
+      max-height: 90vh;
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid var(--ltb-border);
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ltb-modal__header,
+    .ltb-modal__footer {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--ltb-border);
+      flex-shrink: 0;
+    }
+
+    .ltb-modal__footer {
+      border-bottom: 0;
+      border-top: 1px solid var(--ltb-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: nowrap;
+      background: #fff;
+      border-radius: 0 0 18px 18px;
+    }
+
+    .ltb-modal__body {
+      padding: 18px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .ltb-modal__title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .ltb-modal__text {
+      color: var(--ltb-muted);
+      font-size: 14px;
+    }
+
+    .ltb-pdf-embed {
+      width: 100%;
+      height: 70vh;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    /* ===== LOADING OVERLAY ===== */
+    .ltb-loading-box {
+      background: #fff;
+      border-radius: 18px;
+      padding: 36px 48px;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+      min-width: 320px;
+    }
+
+    .ltb-loading-box__title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .ltb-loading-box__msg {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .ltb-progress-track {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .ltb-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #0b63ce;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    /* ===== SUCCESS MODAL ===== */
+    .ltb-success-header {
+      background: #eefbf4;
+      border-bottom: 1px solid #bbe6ca;
+      padding: 20px 22px;
+    }
+
+    .ltb-success-header .ltb-modal__title {
+      color: #166534;
+      font-size: 20px;
+    }
+
+    .ltb-success-header .ltb-modal__text {
+      color: #3a8a5c;
+    }
+
+    .ltb-success-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--ltb-border);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .ltb-success-item__icon {
+      color: #198754;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .ltb-success-meta {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #cbd5e1;
+    }
+
+    .ltb-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .ltb-liciel-widget__grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== BLOC 1 : ACCÈS DOSSIER ===== -->
+  <div class="ltb-liciel-widget" id="ltbLicielWidget">
+    <div class="ltb-liciel-widget__header">
+      <div>
+        <div class="ltb-liciel-widget__title">Gestion locale des attestations opérateur</div>
+        <div class="ltb-liciel-widget__subtitle">
+          L'application affiche les prévisualisations actuelles, puis remplace les fichiers PDF et JPEG en conservant les noms et emplacements attendus.
+        </div>
+      </div>
+      <div class="ltb-liciel-widget__badge">PDF recommandé comme document source</div>
+    </div>
+
+    <section class="ltb-liciel-widget__panel">
+      <div class="ltb-liciel-widget__panel-title">1. Accès au dossier C:\LICIEL_Diagnostics</div>
+      <div class="ltb-liciel-widget__panel-desc">
+        Sélectionnez le dossier <strong>C:\LICIEL_Diagnostics</strong>. L'application retrouvera automatiquement les sous-dossiers des attestations et de la signature.
+      </div>
+      <div class="ltb-liciel-widget__actions">
+        <button class="ltb-btn ltb-btn--primary" id="ltbSelectRootBtn">Sélectionner le dossier</button>
+      </div>
+      <div class="ltb-liciel-widget__path" id="ltbPathDisplay">Aucun dossier sélectionné</div>
+      <div class="ltb-liciel-widget__info"></div>
+      <div class="ltb-status ltb-status--info" id="ltbStatusBox"></div>
+    </section>
+  </div>
+
+  <!-- ===== BLOC 2 : PRÉVISUALISATION (pleine largeur) ===== -->
+  <div class="ltb-liciel-widget" style="margin-top:20px;">
+    <section class="ltb-liciel-widget__panel">
+      <div class="ltb-liciel-widget__panel-title">2. Prévisualisation des attestations disponibles et 3. Ajouter mes nouvelles certifications</div>
+      <div class="ltb-liciel-widget__panel-desc">
+        Cliquez sur 👁 pour voir le PDF · Sur 🗑 pour supprimer · Sur <strong>+</strong> pour ajouter un document sur une vignette vide.
+      </div>
+      <div class="ltb-domain-list" id="ltbDomainList"></div>
+    </section>
+  </div>
+
+  <!-- ===== BLOCS 3 + 4 CÔTE À CÔTE (ex 4+5) ===== -->
+  <div class="ltb-liciel-widget" style="margin-top:20px;">
+    <div class="ltb-side-by-side" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:stretch;">
+
+      <!-- Bloc 4 : Signature -->
+      <section class="ltb-liciel-widget__panel" style="height:100%;">
+        <div class="ltb-liciel-widget__panel-title">4. Gérer ma signature</div>
+        <div class="ltb-liciel-widget__panel-desc">Signature stockée dans le sous-dossier Signatures de C:\LICIEL_Diagnostics</div>
+        <div class="ltb-liciel-widget__actions">
+          <button class="ltb-btn ltb-btn--secondary" id="ltbLoadSignature">Afficher signature actuelle</button>
+        </div>
+        <div id="ltbSignaturePreview" class="ltb-domain-card__preview" style="height:120px; margin-bottom:12px;">
+          <div class="ltb-domain-card__empty">Aucune signature chargée</div>
+        </div>
+        <div class="ltb-liciel-widget__panel-desc">Signer directement :</div>
+        <canvas id="ltbSignatureCanvas" width="350" height="210" style="border:1px solid #ccc; border-radius:8px; background:#fff; max-width:100%; touch-action:none;"></canvas>
+        <div class="ltb-liciel-widget__actions">
+          <button class="ltb-btn ltb-btn--secondary" id="ltbClearSignature">Effacer</button>
+          <button class="ltb-btn ltb-btn--primary" id="ltbSaveSignature">Enregistrer signature</button>
+        </div>
+        <div class="ltb-liciel-widget__panel-desc">Ou importer une image :</div>
+        <input type="file" id="ltbImportSignature" accept="image/*">
+        <canvas id="ltbCropCanvas" width="350" height="210" style="border:1px dashed #ccc; margin-top:10px; display:none; max-width:100%;"></canvas>
+        <div class="ltb-liciel-widget__actions">
+          <button class="ltb-btn ltb-btn--primary" id="ltbApplyCrop" style="display:none;">Valider le recadrage</button>
+        </div>
+      </section>
+
+      <!-- Bloc 5 : Valider et transmettre -->
+      <section class="ltb-liciel-widget__panel" style="height:100%;">
+        <div class="ltb-liciel-widget__panel-title">5. Valider et transmettre les modifications</div>
+        <div class="ltb-liciel-widget__panel-desc">
+          Une fois vos attestations et votre signature mises à jour, cliquez sur le bouton ci-dessous pour récapituler toutes les opérations effectuées durant cette session et les envoyer par e-mail.
+        </div>
+        <div class="ltb-liciel-widget__actions">
+          <button class="ltb-btn ltb-btn--primary" id="ltbValidateBtn" disabled>
+            ✉️ Valider et transmettre les modifications
+          </button>
+        </div>
+        <div class="ltb-note" style="margin-top:0;">
+          Ce bouton devient actif dès qu'au moins une attestation ou la signature a été mise à jour durant cette session.
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ===== MODAL VALIDATION FINALE ===== -->
+  <div class="ltb-modal" id="ltbValidateModal" aria-hidden="true">
+    <div class="ltb-modal__dialog">
+      <div class="ltb-success-header">
+        <div class="ltb-modal__title">✅ Processus terminé</div>
+        <div class="ltb-modal__text">
+          Toutes vos modifications ont été appliquées. Récapitulatif de la session ci-dessous.
+        </div>
+      </div>
+      <div class="ltb-modal__body" id="ltbValidateBody"></div>
+      <div class="ltb-modal__footer" style="flex-direction:column; align-items:stretch; gap:14px;">
+        <a class="ltb-btn ltb-btn--success" id="ltbValidateMailtoBtn" href="#" style="justify-content:center;">
+          📧 Envoyer le récapitulatif par e-mail (Outlook)
+        </a>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:14px; text-align:center; color:#166534; font-size:14px; font-weight:700;">
+          🎉 Le processus est terminé. Vous pouvez fermer cette fenêtre et l'application.
+        </div>
+        <button class="ltb-btn ltb-btn--secondary" id="ltbCloseValidateBtn" disabled style="justify-content:center; opacity:0.4; cursor:not-allowed;">Fermer</button>
+      </div>
+    </div>
+  </div>
+  <!-- ===== MODAL AJOUT RAPIDE ===== -->
+  <div class="ltb-modal" id="ltbQuickAddModal" aria-hidden="true">
+    <div class="ltb-modal__dialog" style="width:min(540px,100%);">
+      <div class="ltb-modal__header" style="background:linear-gradient(135deg,#0b63ce 0%,#084b9c 100%); border-bottom:none; border-radius:18px 18px 0 0;">
+        <div class="ltb-modal__title" id="ltbQuickAddTitle" style="color:#fff; font-size:17px;"></div>
+        <div class="ltb-modal__text" style="color:rgba(255,255,255,0.75); margin-top:4px;">Sélectionnez le fichier source puis cochez les domaines à mettre à jour.</div>
+      </div>
+      <div class="ltb-modal__body" style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+
+        <!-- Zone de dépôt / sélection fichier -->
+        <div id="ltbQuickAddDropZone" style="
+          border: 2px dashed #c9defa;
+          border-radius: 14px;
+          background: #f0f7ff;
+          padding: 20px 16px;
+          text-align: center;
+          cursor: pointer;
+          transition: border-color 0.15s, background 0.15s;
+        ">
+          <div style="font-size:28px; margin-bottom:6px;">📄</div>
+          <div style="font-weight:700; color:#0b63ce; font-size:14px; margin-bottom:4px;">Cliquez pour choisir un fichier</div>
+          <div style="font-size:12px; color:#6b7280;">PDF (recommandé) ou JPEG</div>
+          <input type="file" id="ltbQuickAddFile" accept="application/pdf,image/jpeg,image/jpg" style="display:none;">
+        </div>
+        <!-- Nom du fichier sélectionné -->
+        <div id="ltbQuickAddFileName" style="
+          display:none;
+          align-items:center;
+          gap:10px;
+          background:#eefbf4;
+          border:1px solid #bbe6ca;
+          border-radius:10px;
+          padding:10px 14px;
+          font-size:13px;
+          color:#166534;
+          font-weight:700;
+        ">
+          <span>✅</span>
+          <span id="ltbQuickAddFileNameText"></span>
+        </div>
+
+        <!-- Domaines à cocher -->
+        <div>
+          <div style="font-size:13px; font-weight:700; color:#374151; margin-bottom:10px;">Domaines à mettre à jour</div>
+          <div class="ltb-checkbox-grid" id="ltbQuickAddDomains" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));"></div>
+        </div>
+
+      </div>
+      <div class="ltb-modal__footer">
+        <button class="ltb-btn ltb-btn--secondary" id="ltbCancelQuickAddBtn">Annuler</button>
+        <button class="ltb-btn ltb-btn--primary" id="ltbConfirmQuickAddBtn" disabled style="background:#94a3b8; cursor:not-allowed; transform:none;">Ajouter et confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ltb-modal" id="ltbConfirmModal" aria-hidden="true">
+    <div class="ltb-modal__dialog">
+      <div class="ltb-modal__header">
+        <div class="ltb-modal__title">Confirmation du remplacement</div>
+        <div class="ltb-modal__text">Vérifiez les remplacements à effectuer avant écriture dans le dossier local.</div>
+      </div>
+      <div class="ltb-modal__body" id="ltbConfirmBody"></div>
+      <div class="ltb-modal__footer">
+        <button class="ltb-btn ltb-btn--secondary" id="ltbCancelConfirmBtn">Annuler</button>
+        <button class="ltb-btn ltb-btn--danger" id="ltbConfirmApplyBtn">Confirmer les remplacements</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL PDF (CORRECTION BUG 2 : iframe fonctionnelle) ===== -->
+  <div class="ltb-modal" id="ltbPdfModal" aria-hidden="true">
+    <div class="ltb-modal__dialog">
+      <div class="ltb-modal__header">
+        <div class="ltb-modal__title" id="ltbPdfModalTitle">Aperçu PDF</div>
+        <div class="ltb-modal__text">Le document est affiché tel qu'il est actuellement stocké dans le dossier local.</div>
+      </div>
+      <div class="ltb-modal__body" style="padding:0;">
+        <iframe class="ltb-pdf-embed" id="ltbPdfFrame" title="Aperçu PDF"></iframe>
+      </div>
+      <div class="ltb-modal__footer">
+        <button class="ltb-btn ltb-btn--secondary" id="ltbClosePdfBtn">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CHARGEMENT (NOUVEAU : feedback pendant conversion) ===== -->
+  <div class="ltb-modal" id="ltbLoadingOverlay" aria-hidden="true">
+    <div class="ltb-loading-box">
+      <div class="ltb-loading-box__title">⏳ Conversion en cours…</div>
+      <div class="ltb-loading-box__msg" id="ltbLoadingMsg">Initialisation…</div>
+      <div class="ltb-progress-track">
+        <div class="ltb-progress-bar" id="ltbProgressBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+  <script type="module">
+    import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    // =========================================================
+    // ÉTAT GLOBAL
+    // CORRECTION BUG 3 : rootHandle supprimé (n'était jamais utilisé)
+    // =========================================================
+    const state = {
+      licielRootHandle: null,
+      signaturesHandle: null,
+      assignmentPreviewUrls: new Map(),
+      selectedHandle: null,
+      attestationsHandle: null,
+      sourcesHandle: null,
+      domains: [],
+      assignments: [],
+      summaryPlan: null,
+      previewUrls: new Map(),
+      pdfUrls: new Map(),
+      sessionLog: [],   // stocke les opérations de la session (attestations + signature)
+    };
+
+    // =========================================================
+    // RÉFÉRENCES DOM
+    // =========================================================
+    const el = {
+      pathDisplay:        document.getElementById('ltbPathDisplay'),
+      statusBox:          document.getElementById('ltbStatusBox'),
+      selectRootBtn:      document.getElementById('ltbSelectRootBtn'),
+      domainList:         document.getElementById('ltbDomainList'),
+      confirmModal:       document.getElementById('ltbConfirmModal'),
+      quickAddModal:      document.getElementById('ltbQuickAddModal'),
+      quickAddTitle:      document.getElementById('ltbQuickAddTitle'),
+      quickAddDropZone:   document.getElementById('ltbQuickAddDropZone'),
+      quickAddFile:       document.getElementById('ltbQuickAddFile'),
+      quickAddFileName:   document.getElementById('ltbQuickAddFileName'),
+      quickAddFileNameText: document.getElementById('ltbQuickAddFileNameText'),
+      quickAddDomains:    document.getElementById('ltbQuickAddDomains'),
+      cancelQuickAddBtn:  document.getElementById('ltbCancelQuickAddBtn'),
+      confirmQuickAddBtn: document.getElementById('ltbConfirmQuickAddBtn'),
+      confirmBody:        document.getElementById('ltbConfirmBody'),
+      cancelConfirmBtn:   document.getElementById('ltbCancelConfirmBtn'),
+      confirmApplyBtn:    document.getElementById('ltbConfirmApplyBtn'),
+      pdfModal:           document.getElementById('ltbPdfModal'),
+      pdfModalTitle:      document.getElementById('ltbPdfModalTitle'),
+      pdfFrame:           document.getElementById('ltbPdfFrame'),
+      closePdfBtn:        document.getElementById('ltbClosePdfBtn'),
+      loadingOverlay:     document.getElementById('ltbLoadingOverlay'),
+      loadingMsg:         document.getElementById('ltbLoadingMsg'),
+      progressBar:        document.getElementById('ltbProgressBar'),
+      validateBtn:        document.getElementById('ltbValidateBtn'),
+      validateModal:      document.getElementById('ltbValidateModal'),
+      validateBody:       document.getElementById('ltbValidateBody'),
+      validateMailtoBtn:  document.getElementById('ltbValidateMailtoBtn'),
+      closeValidateBtn:   document.getElementById('ltbCloseValidateBtn'),
+    };
+
+    // CORRECTION BUG 4 : EXPECTED_SEGMENTS et SIGNATURE_SEGMENTS supprimés (jamais utilisés)
+
+    // =========================================================
+    // UTILITAIRES STATUT
+    // =========================================================
+    function setStatus(message, type = 'info') {
+      el.statusBox.textContent = message;
+      el.statusBox.className = 'ltb-status is-visible ' + (
+        type === 'success' ? 'ltb-status--success' :
+        type === 'error'   ? 'ltb-status--error'   :
+                             'ltb-status--info'
+      );
+    }
+
+    function clearStatus() {
+      el.statusBox.textContent = '';
+      el.statusBox.className = 'ltb-status ltb-status--info';
+    }
+
+    // =========================================================
+    // UTILITAIRE SÉCURITÉ HTML
+    // =========================================================
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // =========================================================
+    // OVERLAY DE CHARGEMENT (NOUVEAU)
+    // =========================================================
+    function showLoading(message = 'Initialisation…') {
+      el.loadingMsg.textContent = message;
+      el.progressBar.style.width = '0%';
+      el.loadingOverlay.classList.add('is-open');
+      el.loadingOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function updateLoading(message, percent) {
+      el.loadingMsg.textContent = message;
+      el.progressBar.style.width = Math.min(100, Math.max(0, percent)) + '%';
+    }
+
+    function hideLoading() {
+      el.loadingOverlay.classList.remove('is-open');
+      el.loadingOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    // =========================================================
+    // GESTION DES PERMISSIONS FICHIER SYSTEM API
+    // =========================================================
+    async function verifyPermission(handle, mode = 'readwrite') {
+      const opts = { mode };
+      if ((await handle.queryPermission(opts)) === 'granted') return true;
+      return (await handle.requestPermission(opts)) === 'granted';
+    }
+
+    async function openDirectoryByPath(startHandle, segments) {
+      let current = startHandle;
+      for (const segment of segments) {
+        current = await current.getDirectoryHandle(segment);
+      }
+      return current;
+    }
+
+    async function resolveLicielRoot(selectedHandle) {
+      if (selectedHandle.name === 'LICIEL_Diagnostics') {
+        return selectedHandle;
+      }
+      if (selectedHandle.name.toUpperCase() === 'C:' || selectedHandle.name.toUpperCase() === 'C') {
+        return await selectedHandle.getDirectoryHandle('LICIEL_Diagnostics');
+      }
+      try {
+        return await selectedHandle.getDirectoryHandle('LICIEL_Diagnostics');
+      } catch {
+        throw new Error('Le dossier sélectionné doit être C:\\LICIEL_Diagnostics ou permettre de le retrouver automatiquement.');
+      }
+    }
+
+    async function resolveAttestationsDirectory(licielRootHandle) {
+      return await openDirectoryByPath(licielRootHandle, ['Operateurs', 'Attestations_PDF']);
+    }
+
+    async function resolveSignaturesDirectory(licielRootHandle) {
+      return await openDirectoryByPath(licielRootHandle, ['Modeles', 'Signatures']);
+    }
+
+    async function existsFile(dirHandle, fileName) {
+      try { return await dirHandle.getFileHandle(fileName); }
+      catch { return null; }
+    }
+
+    async function existsDir(dirHandle, dirName) {
+      try { return await dirHandle.getDirectoryHandle(dirName); }
+      catch { return null; }
+    }
+
+    // =========================================================
+    // NETTOYAGE MÉMOIRE
+    // =========================================================
+    function revokeAllObjectUrls() {
+      for (const url of state.assignmentPreviewUrls.values()) URL.revokeObjectURL(url);
+      state.assignmentPreviewUrls.clear();
+      for (const url of state.previewUrls.values()) URL.revokeObjectURL(url);
+      for (const url of state.pdfUrls.values()) URL.revokeObjectURL(url);
+      state.previewUrls.clear();
+      state.pdfUrls.clear();
+    }
+
+    // =========================================================
+    // SCAN DES DOMAINES
+    // =========================================================
+    async function scanDomains() {
+      if (!state.attestationsHandle) return;
+      revokeAllObjectUrls();
+
+      // Crée ou ouvre le dossier Attestations_sources (invisible pour LICIEL, utilisé par l'app)
+      state.sourcesHandle = await getOrCreateDir(state.attestationsHandle, 'Attestations_sources');
+
+      const EXPECTED_DOMAIN_FILES = [
+        'Attestation Amiante',
+        'Attestation Plomb',
+        'Attestation Elec',
+        'Attestation Gaz',
+        'Attestation Termite',
+        'Attestation DPE Mention',
+        'Attestation DPE Simple',
+        'Attestation Audit',
+        'Titre Pro Industrie',
+        'Titre Pro 46-102',
+        'Titre Pro Ferroviaire',
+        'Titre Pro Aeronef'
+      ];
+
+      const domains = [];
+
+      for (const baseName of EXPECTED_DOMAIN_FILES) {
+        const pdfName      = baseName + '.pdf';
+        const folderHandle = await existsDir(state.attestationsHandle, baseName);
+        const pdfHandle    = await existsFile(state.attestationsHandle, pdfName);
+
+        // Recherche du JPEG de prévisualisation :
+        // Priorité 1 : nouveau format numéroté _1.jpg
+        // Priorité 2 : ancien format .jpg (rétrocompatibilité)
+        let jpgPreviewHandle = null;
+        let jpgPreviewName   = baseName + '_1.jpg';
+        if (folderHandle) {
+          jpgPreviewHandle = await existsFile(folderHandle, baseName + '_1.jpg');
+          if (!jpgPreviewHandle) {
+            jpgPreviewHandle = await existsFile(folderHandle, baseName + '.jpg');
+            jpgPreviewName   = baseName + '.jpg';
+          }
+        }
+
+        // Compte le nombre de JPEGs numérotés présents dans le sous-dossier
+        let jpegPageCount = 0;
+        if (folderHandle) {
+          for (let p = 1; p <= 5; p++) {
+            const h = await existsFile(folderHandle, baseName + '_' + p + '.jpg');
+            if (h) jpegPageCount++; else break;
+          }
+          // Fallback : ancien fichier non numéroté compte comme 1
+          if (jpegPageCount === 0 && jpgPreviewHandle) jpegPageCount = 1;
+        }
+
+        let previewUrl = '', pdfUrl = '';
+        let pdfSize = 0, jpgSize = 0;
+        let pdfLastModified = null, jpgLastModified = null;
+
+        if (pdfHandle) {
+          const pdfFile = await pdfHandle.getFile();
+          pdfUrl = URL.createObjectURL(pdfFile);
+          state.pdfUrls.set(baseName, pdfUrl);
+          pdfSize = pdfFile.size;
+          pdfLastModified = pdfFile.lastModified;
+        }
+
+        if (jpgPreviewHandle) {
+          const jpgFile = await jpgPreviewHandle.getFile();
+          previewUrl = URL.createObjectURL(jpgFile);
+          state.previewUrls.set(baseName, previewUrl);
+          jpgSize = jpgFile.size;
+          jpgLastModified = jpgFile.lastModified;
+        }
+
+        domains.push({
+          baseName, pdfName, folderHandle, pdfHandle,
+          jpgPreviewHandle, jpgPreviewName, jpegPageCount,
+          previewUrl, pdfUrl, pdfSize, jpgSize,
+          pdfLastModified, jpgLastModified
+        });
+      }
+
+      state.domains = domains;
+      state.assignments = [];
+      state.summaryPlan = null;
+      renderDomains();
+      setStatus(domains.length + ' domaine(s) attendu(s) affiché(s).', 'success');
+    }
+
+    // =========================================================
+    // FORMATAGE
+    // =========================================================
+    function formatDate(ts) {
+      try { return new Date(ts).toLocaleString('fr-FR'); }
+      catch { return '-'; }
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return '-';
+      if (bytes < 1024) return bytes + ' o';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' Mo';
+    }
+
+    // =========================================================
+    // RENDU DOMAINES
+    // =========================================================
+    function renderDomains() {
+      if (!state.domains.length) {
+        el.domainList.innerHTML = `
+          <div class="ltb-domain-card">
+            <div class="ltb-domain-card__preview">
+              <div class="ltb-domain-card__empty">Aucune attestation détectée</div>
+            </div>
+            <div class="ltb-domain-card__body">
+              <div class="ltb-domain-card__name">Aucun résultat</div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      const TITRE_PRO_NAMES = ['Titre Pro Industrie', 'Titre Pro 46-102', 'Titre Pro Ferroviaire', 'Titre Pro Aeronef'];
+
+      el.domainList.innerHTML = state.domains.map(domain => {
+        const isTitrePro = TITRE_PRO_NAMES.includes(domain.baseName);
+
+        // Thumbnail avec icône œil si PDF disponible + bouton poubelle
+        const eyeBtn = domain.pdfUrl
+          ? `<button class="ltb-eye-btn" data-action="view-pdf" data-domain="${escapeHtml(domain.baseName)}" title="Voir le PDF">👁</button>`
+          : '';
+        const delBtn = `<button class="ltb-del-btn" data-action="delete-domain" data-domain="${escapeHtml(domain.baseName)}" title="Supprimer">🗑</button>`;
+
+        const overlayBadge = isTitrePro
+          ? `<div class="ltb-domain-card__overlay">Fusion avec Amiante</div>`
+          : '';
+
+        const addQuickBtn = !domain.pdfHandle
+          ? `<button class="ltb-add-quick-btn" data-action="quick-add" data-domain="${escapeHtml(domain.baseName)}" title="Ajouter un document">+</button>`
+          : '';
+
+        const previewBlock = domain.previewUrl
+          ? `<img src="${domain.previewUrl}" alt="${escapeHtml(domain.baseName)}" />${eyeBtn}${delBtn}${overlayBadge}`
+          : `<div class="ltb-domain-card__empty">${isTitrePro ? 'Aucun Titre Pro' : 'Absent'}</div>${eyeBtn}${delBtn}${addQuickBtn}`;
+
+        // Tags simplifiés : statut PDF + nombre de JPEGs
+        const pdfTag  = `<span class="ltb-tag ${domain.pdfHandle ? 'ltb-tag--ok' : 'ltb-tag--ko'}">${domain.pdfHandle ? '✓ PDF' : '✗ PDF'}</span>`;
+        const jpegTag = isTitrePro
+          ? `<span class="ltb-tag ltb-tag--info">Titre Pro</span>`
+          : (domain.jpegPageCount > 0
+              ? `<span class="ltb-tag ltb-tag--ok">${domain.jpegPageCount} JPEG</span>`
+              : `<span class="ltb-tag ltb-tag--ko">✗ JPEG</span>`);
+
+        return `
+        <div class="ltb-domain-card">
+          <div class="ltb-domain-card__preview">${previewBlock}</div>
+          <div class="ltb-domain-card__body">
+            <div class="ltb-domain-card__name">${escapeHtml(domain.baseName)}</div>
+            <div class="ltb-domain-card__tags">${pdfTag}${jpegTag}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // =========================================================
+    // GESTION DES AFFECTATIONS
+    // =========================================================
+    // =========================================================
+    // CONVERSION : rendu d'un fichier en tableau de bitmaps
+    // Une bitmap par page PDF, une seule pour une image.
+    // Aucune limite de pages.
+    // =========================================================
+    async function renderPdfToPageBitmaps(file) {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      if (!isPdf) {
+        return [await createImageBitmap(file)];
+      }
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const bitmaps = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = Math.min(2.2, Math.max(1.3, 1800 / baseViewport.width));
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        const ctx = canvas.getContext('2d', { alpha: false });
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        bitmaps.push(await createImageBitmap(canvas));
+      }
+      return bitmaps;
+    }
+
+    async function bitmapToJpegBlob(bitmap, quality = 0.92) {
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0);
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Impossible de générer le JPEG.')), 'image/jpeg', quality);
+      });
+    }
+
+    // =========================================================
+    // CRÉATION D'UN PDF N PAGES à partir d'un tableau de bitmaps
+    // Structure PDF manuelle, générique (1 à N pages)
+    // =========================================================
+    async function createMultiPagePdfBlob(bitmaps) {
+      const n = bitmaps.length;
+
+      // Convertit un bitmap en Uint8Array JPEG
+      async function bitmapToJpegBytes(bitmap) {
+        const blob = await bitmapToJpegBlob(bitmap);
+        return new Uint8Array(await blob.arrayBuffer());
+      }
+
+      const jpegBytesArray = [];
+      for (const bmp of bitmaps) jpegBytesArray.push(await bitmapToJpegBytes(bmp));
+
+      // Numérotation des objets PDF :
+      // Obj 1 : Catalog
+      // Obj 2 : Pages
+      // Pour chaque page i (0-indexed) :
+      //   Obj 3+i*3 : Page,  Obj 4+i*3 : Image XObject,  Obj 5+i*3 : Content stream
+      const totalObjs    = 2 + n * 3;
+      const pageObjNums  = bitmaps.map((_, i) => 3 + i * 3);
+      const imgObjNums   = bitmaps.map((_, i) => 4 + i * 3);
+      const csObjNums    = bitmaps.map((_, i) => 5 + i * 3);
+
+      const encoder = new TextEncoder();
+      const parts   = [];
+      const offsets = new Array(totalObjs + 1).fill(0);
+      let pos = 0;
+      function pt(text) { const d = encoder.encode(text); parts.push(d); pos += d.length; }
+      function pb(data) { parts.push(data); pos += data.length; }
+
+      pt('%PDF-1.4\n');
+      offsets[1] = pos; pt(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
+      offsets[2] = pos; pt(`2 0 obj\n<< /Type /Pages /Kids [${pageObjNums.map(n => n + ' 0 R').join(' ')}] /Count ${n} >>\nendobj\n`);
+
+      for (let i = 0; i < n; i++) {
+        const w = bitmaps[i].width, h = bitmaps[i].height;
+        const bytes  = jpegBytesArray[i];
+        const pNum   = pageObjNums[i];
+        const iNum   = imgObjNums[i];
+        const cNum   = csObjNums[i];
+        const cs     = `q\n${w} 0 0 ${h} 0 0 cm\n/Im${i + 1} Do\nQ\n`;
+
+        offsets[pNum] = pos;
+        pt(`${pNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im${i + 1} ${iNum} 0 R >> >> /Contents ${cNum} 0 R >>\nendobj\n`);
+
+        offsets[iNum] = pos;
+        pt(`${iNum} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`);
+        pb(bytes);
+        pt('\nendstream\nendobj\n');
+
+        offsets[cNum] = pos;
+        pt(`${cNum} 0 obj\n<< /Length ${cs.length} >>\nstream\n${cs}endstream\nendobj\n`);
+      }
+
+      const xrefPos = pos;
+      let xref = `xref\n0 ${totalObjs + 1}\n0000000000 65535 f \n`;
+      for (let i = 1; i <= totalObjs; i++) xref += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+      xref += `trailer\n<< /Size ${totalObjs + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+      pt(xref);
+
+      return new Blob(parts, { type: 'application/pdf' });
+    }
+
+    // =========================================================
+    // CONVERSION source → {pdfBlob, jpegBlobs[]}
+    // pdfBlob  = PDF original si source PDF, sinon PDF généré
+    // jpegBlobs = un blob JPEG par page
+    // =========================================================
+    async function convertSourceToMultiPageOutputs(file) {
+      const bitmaps = await renderPdfToPageBitmaps(file);
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const pdfBlob = isPdf
+        ? file.slice(0, file.size, 'application/pdf')   // conserve le PDF original intact
+        : await createMultiPagePdfBlob(bitmaps);         // image → PDF 1 page
+      const jpegBlobs = [];
+      for (const bmp of bitmaps) jpegBlobs.push(await bitmapToJpegBlob(bmp));
+      return { pdfBlob, jpegBlobs };
+    }
+
+    // =========================================================
+    // UTILITAIRE : obtient ou crée un sous-dossier
+    // =========================================================
+    async function getOrCreateDir(parentHandle, dirName) {
+      return await parentHandle.getDirectoryHandle(dirName, { create: true });
+    }
+
+    // =========================================================
+    // UTILITAIRE : vide tous les fichiers d'un sous-dossier
+    // Appelé avant chaque écriture de JPEGs pour ne garder
+    // que les nouveaux fichiers générés.
+    // =========================================================
+    async function clearDirectory(dirHandle) {
+      for await (const [name] of dirHandle.entries()) {
+        await dirHandle.removeEntry(name, { recursive: false });
+      }
+    }
+
+    // =========================================================
+    // RÉSUMÉ / PLAN DE REMPLACEMENT
+    // =========================================================
+    function buildSummaryPlan() {
+      const conflicts = [];
+      const map = new Map();
+      const items = [];
+
+      state.assignments.forEach(assignment => {
+        if (!assignment.file || !assignment.selectedDomains.length) return;
+        assignment.selectedDomains.forEach(domainName => {
+          if (map.has(domainName)) {
+            conflicts.push(domainName);
+          } else {
+            map.set(domainName, assignment.id);
+            items.push({ assignmentId: assignment.id, file: assignment.file, fileName: assignment.fileName, fileType: assignment.fileType, domainName });
+          }
+        });
+      });
+
+      if (conflicts.length) throw new Error('Certains domaines sont affectés plusieurs fois : ' + [...new Set(conflicts)].join(', '));
+      if (!items.length) throw new Error('Aucun remplacement valide à préparer.');
+      return items;
+    }
+
+    // =========================================================
+    // MODALS CONFIRMATION + PDF
+    // =========================================================
+    function openConfirmModal() {
+      el.confirmBody.innerHTML = state.summaryPlan.map(item => `
+        <div class="ltb-summary__item" style="margin-bottom:8px;">
+          <strong>${escapeHtml(item.domainName)}</strong><br>
+          Document source : ${escapeHtml(item.fileName)}<br>
+          Remplacement : ${escapeHtml(item.domainName)}.pdf et ${escapeHtml(item.domainName)}\\${escapeHtml(item.domainName)}.jpg
+        </div>`).join('');
+      el.confirmModal.classList.add('is-open');
+      el.confirmModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeConfirmModal() {
+      el.confirmModal.classList.remove('is-open');
+      el.confirmModal.setAttribute('aria-hidden', 'true');
+    }
+
+    // CORRECTION BUG 2 : openPdfModal utilise maintenant l'iframe et le modal HTML
+    // L'ancienne version faisait window.open() ce qui ignorait complètement le modal
+    function openPdfModal(domainName) {
+      const url = state.pdfUrls.get(domainName);
+      if (!url) return;
+      el.pdfModalTitle.textContent = 'Aperçu — ' + domainName;
+      el.pdfFrame.src = url;                              // ← injecte l'URL dans l'iframe
+      el.pdfModal.classList.add('is-open');               // ← ouvre le modal
+      el.pdfModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closePdfModal() {
+      el.pdfModal.classList.remove('is-open');
+      el.pdfModal.setAttribute('aria-hidden', 'true');
+      el.pdfFrame.src = 'about:blank';                    // ← libère la ressource
+    }
+
+    // =========================================================
+    // ÉCRITURE FICHIERS
+    // =========================================================
+    async function writeBlobToFile(dirHandle, fileName, blob) {
+      const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+
+    // =========================================================
+    // EXÉCUTION DU REMPLACEMENT
+    // CORRECTION BUG 1 : loadCurrentSignature() appelé une seule fois (était double)
+    // NOUVEAU : showLoading / updateLoading / hideLoading + alimentation sessionLog bloc 5
+    // =========================================================
+    async function executeReplacement() {
+      if (!state.summaryPlan?.length) throw new Error('Aucun plan de remplacement à exécuter.');
+
+      const planSnapshot   = [...state.summaryPlan];
+      showLoading('Démarrage…');
+
+      const amianteItem    = planSnapshot.find(item => item.domainName === 'Attestation Amiante');
+      const skippedDomains = new Set();
+
+      // Ordre de fusion garanti : Amiante → Titre Pro Industrie → Titre Pro 46-102
+      // Pour ajouter un futur Titre Pro, l'ajouter ici dans l'ordre voulu
+      const TITRE_PRO_ORDER = ['Titre Pro Industrie', 'Titre Pro 46-102', 'Titre Pro Ferroviaire', 'Titre Pro Aeronef'];
+
+      // Pour chaque Titre Pro : fichier assigné cette session + handle existant sur disque
+      const titreProInfos = TITRE_PRO_ORDER.map(name => {
+        const assignedItem   = planSnapshot.find(item => item.domainName === name) || null;
+        const domainOnDisk   = state.domains.find(d => d.baseName === name) || null;
+        const existingHandle = domainOnDisk?.pdfHandle || null;
+        return { name, assignedItem, domainOnDisk, existingHandle,
+                 participates: !!(assignedItem || existingHandle), bitmaps: null };
+      });
+
+      const anyTitreProAssigned = titreProInfos.some(tp => tp.assignedItem);
+      const anyTitreProOnDisk   = titreProInfos.some(tp => tp.existingHandle);
+      const needsMerge = !!(anyTitreProAssigned || (amianteItem && anyTitreProOnDisk));
+
+      // -------------------------------------------------------
+      // CAS FUSION : Amiante + Titre(s) Pro (dans l'ordre)
+      // -------------------------------------------------------
+      if (needsMerge) {
+        skippedDomains.add('Attestation Amiante');
+        let prog = 8;
+
+        // --- Étape 1 : Traitement standalone de chaque Titre Pro nouvellement assigné
+        for (const tp of titreProInfos.filter(t => t.assignedItem)) {
+          skippedDomains.add(tp.name);
+          updateLoading(`Rendu de ${tp.name}…`, prog); prog += 5;
+          tp.bitmaps = await renderPdfToPageBitmaps(tp.assignedItem.file);
+
+          const isPdf = tp.assignedItem.file.type === 'application/pdf' || tp.assignedItem.file.name.toLowerCase().endsWith('.pdf');
+          const pdfBlob = isPdf
+            ? tp.assignedItem.file.slice(0, tp.assignedItem.file.size, 'application/pdf')
+            : await createMultiPagePdfBlob(tp.bitmaps);
+
+          updateLoading(`Enregistrement standalone de ${tp.name}…`, prog); prog += 5;
+          await writeBlobToFile(state.attestationsHandle, `${tp.name}.pdf`, pdfBlob);
+          const folder = await getOrCreateDir(state.attestationsHandle, tp.name);
+          await clearDirectory(folder);
+          for (let p = 0; p < tp.bitmaps.length; p++) {
+            await writeBlobToFile(folder, `${tp.name}_${p + 1}.jpg`, await bitmapToJpegBlob(tp.bitmaps[p]));
+          }
+        }
+
+        // --- Étape 2 : Source Amiante propre (pages brutes sans Titre Pro)
+        updateLoading('Chargement de la source Amiante…', prog); prog += 6;
+        let amianteBitmaps;
+        if (amianteItem) {
+          // Nouvelle Amiante assignée → on rend ses pages ET on sauvegarde la source propre
+          amianteBitmaps = await renderPdfToPageBitmaps(amianteItem.file);
+          const isPdf = amianteItem.file.type === 'application/pdf' || amianteItem.file.name.toLowerCase().endsWith('.pdf');
+          const sourcePdfBlob = isPdf
+            ? amianteItem.file.slice(0, amianteItem.file.size, 'application/pdf')
+            : await createMultiPagePdfBlob(amianteBitmaps);
+          await writeBlobToFile(state.sourcesHandle, 'Attestation Amiante_source.pdf', sourcePdfBlob);
+        } else {
+          // Pas de nouvelle Amiante → on lit la source propre sauvegardée
+          const sourceHandle = await existsFile(state.sourcesHandle, 'Attestation Amiante_source.pdf');
+          if (!sourceHandle) throw new Error(
+            'Aucune source Amiante trouvée dans Attestations_sources/.\n' +
+            'Veuillez charger votre Attestation Amiante au moins une fois pour initialiser la source propre.'
+          );
+          amianteBitmaps = await renderPdfToPageBitmaps(await sourceHandle.getFile());
+        }
+
+        // --- Étape 3 : Bitmaps des Titre Pro existants sur disque (non assignés cette session)
+        for (const tp of titreProInfos.filter(t => t.participates && !t.bitmaps)) {
+          updateLoading(`Lecture de ${tp.name} existant sur disque…`, prog); prog += 4;
+          tp.bitmaps = await renderPdfToPageBitmaps(await tp.existingHandle.getFile());
+        }
+
+        // --- Étape 4 : Fusion dans l'ordre Amiante → TPI → 46-102
+        updateLoading('Fusion en PDF multi-pages…', prog); prog += 8;
+        const participatingTitres = titreProInfos.filter(t => t.participates);
+        const allBitmaps = [
+          ...amianteBitmaps,
+          ...participatingTitres.flatMap(t => t.bitmaps),
+        ];
+        const mergedPdf = await createMultiPagePdfBlob(allBitmaps);
+
+        updateLoading('Enregistrement du PDF fusionné Amiante…', prog); prog += 5;
+        await writeBlobToFile(state.attestationsHandle, 'Attestation Amiante.pdf', mergedPdf);
+
+        // --- Étape 5 : JPEGs numérotés dans le sous-dossier Amiante (vidé au préalable)
+        updateLoading('Génération des JPEGs Amiante numérotés…', prog); prog += 8;
+        const amianteDomainFinal = state.domains.find(d => d.baseName === 'Attestation Amiante');
+        if (!amianteDomainFinal?.folderHandle) throw new Error('Sous-dossier "Attestation Amiante" introuvable.');
+        await clearDirectory(amianteDomainFinal.folderHandle);
+        for (let p = 0; p < allBitmaps.length; p++) {
+          await writeBlobToFile(amianteDomainFinal.folderHandle, `Attestation Amiante_${p + 1}.jpg`, await bitmapToJpegBlob(allBitmaps[p]));
+        }
+        updateLoading('Fusion terminée.', Math.min(prog + 4, 72));
+      }
+
+      // -------------------------------------------------------
+      // BOUCLE NORMALE : tous les autres domaines
+      // -------------------------------------------------------
+      const normalItems = planSnapshot.filter(item => !skippedDomains.has(item.domainName));
+      for (let i = 0; i < normalItems.length; i++) {
+        const item = normalItems[i];
+        const baseProgress    = needsMerge ? 72 : 0;
+        const progressPercent = baseProgress + Math.round((i / Math.max(normalItems.length, 1)) * (90 - baseProgress));
+        updateLoading(`Traitement de "${item.domainName}" (${i + 1} / ${normalItems.length})…`, progressPercent);
+
+        const domain = state.domains.find(d => d.baseName === item.domainName);
+        if (!domain) throw new Error('Domaine introuvable : ' + item.domainName);
+
+        const { pdfBlob, jpegBlobs } = await convertSourceToMultiPageOutputs(item.file);
+        await writeBlobToFile(state.attestationsHandle, domain.pdfName, pdfBlob);
+
+        if (!domain.folderHandle) throw new Error(`Sous-dossier "${item.domainName}" introuvable.`);
+        await clearDirectory(domain.folderHandle);
+        for (let p = 0; p < jpegBlobs.length; p++) {
+          await writeBlobToFile(domain.folderHandle, `${domain.baseName}_${p + 1}.jpg`, jpegBlobs[p]);
+        }
+      }
+
+      updateLoading('Actualisation des prévisualisations…', 95);
+      await scanDomains();
+
+      updateLoading('Chargement de la signature…', 98);
+      await loadCurrentSignature();
+
+      updateLoading('Terminé !', 100);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      hideLoading();
+
+      state.summaryPlan = null;
+
+      setStatus('Remplacement terminé avec succès. Utilisez le bloc 5 pour valider et transmettre.', 'success');
+
+      // Alimentation du log de session (bloc 5)
+      const logDomains = planSnapshot.map(item => {
+        const tp = titreProInfos.find(t => t.name === item.domainName);
+        if (tp) return { domainName: `${tp.name} (standalone + fusionné dans Amiante)`, fileName: item.fileName };
+        if (item.domainName === 'Attestation Amiante' && needsMerge) {
+          const fusionDesc = titreProInfos.filter(t => t.participates).map(t => t.name).join(' + ');
+          return { domainName: `Attestation Amiante fusionnée avec : ${fusionDesc}`, fileName: item.fileName };
+        }
+        return { domainName: item.domainName, fileName: item.fileName };
+      });
+      // Titre Pro relus depuis le disque (existants, non assignés cette session)
+      titreProInfos.filter(t => t.participates && !t.assignedItem).forEach(t => {
+        logDomains.push({ domainName: `${t.name} (existant relu depuis le disque, refusionné)`, fileName: '— fichier existant —' });
+      });
+      state.sessionLog.push({ type: 'attestations', date: new Date().toLocaleString('fr-FR'), domains: logDomains });
+      refreshValidateBtn();
+    }
+
+    // =========================================================
+    // ÉVÉNEMENTS PRINCIPAUX
+    // =========================================================
+    el.selectRootBtn.addEventListener('click', async () => {
+      try {
+        clearStatus();
+        const selected = await window.showDirectoryPicker({ mode: 'readwrite' });
+        const granted = await verifyPermission(selected, 'readwrite');
+        if (!granted) throw new Error('L\'autorisation d\'accès au dossier a été refusée.');
+
+        const licielRootHandle   = await resolveLicielRoot(selected);
+        const attestationsHandle = await resolveAttestationsDirectory(licielRootHandle);
+        const signaturesHandle   = await resolveSignaturesDirectory(licielRootHandle);
+
+        const grantedLiciel     = await verifyPermission(licielRootHandle, 'readwrite');
+        const grantedTarget     = await verifyPermission(attestationsHandle, 'readwrite');
+        const grantedSignatures = await verifyPermission(signaturesHandle, 'readwrite');
+        if (!grantedLiciel || !grantedTarget || !grantedSignatures) {
+          throw new Error('L\'autorisation d\'écriture sur les sous-dossiers Liciel requis a été refusée.');
+        }
+
+        state.selectedHandle     = selected;
+        state.licielRootHandle   = licielRootHandle;
+        state.attestationsHandle = attestationsHandle;
+        state.signaturesHandle   = signaturesHandle;
+        // sourcesHandle est initialisé dans scanDomains() via getOrCreateDir
+
+        el.pathDisplay.textContent = 'Dossier source détecté : C:\\LICIEL_Diagnostics';
+        setStatus('Dossier détecté. Analyse automatique en cours…', 'info');
+        await scanDomains();
+        await loadCurrentSignature(); // affiche la signature existante dès l'ouverture
+      } catch (error) {
+        setStatus(error.message || 'Impossible de sélectionner le dossier.', 'error');
+      }
+    });
+
+    el.cancelConfirmBtn.addEventListener('click', closeConfirmModal);
+
+    // CORRECTION : on ferme le modal de confirmation AVANT d'afficher le loading
+    // et hideLoading() est appelé dans le catch si une erreur survient
+    el.confirmApplyBtn.addEventListener('click', async () => {
+      try {
+        el.confirmApplyBtn.disabled = true;
+        closeConfirmModal();           // ← ferme le modal de confirmation d'abord
+        await executeReplacement();   // ← affiche le loading overlay
+      } catch (error) {
+        hideLoading();                 // ← masque le loading en cas d'erreur
+        setStatus(error.message || 'Erreur pendant le remplacement.', 'error');
+      } finally {
+        el.confirmApplyBtn.disabled = false;
+      }
+    });
+
+    // =========================================================
+    // REFUSION AMIANTE APRÈS SUPPRESSION D'UN TITRE PRO
+    // Lit la source propre + Titre Pro encore présents sur disque
+    // =========================================================
+    async function refuseAmianteAfterDeletion(deletedName) {
+      const TITRE_PRO_ORDER = ['Titre Pro Industrie', 'Titre Pro 46-102', 'Titre Pro Ferroviaire', 'Titre Pro Aeronef'];
+
+      // Lecture de la source Amiante propre
+      const sourceHandle = await existsFile(state.sourcesHandle, 'Attestation Amiante_source.pdf');
+      if (!sourceHandle) {
+        setStatus('Refusion impossible : Attestation Amiante_source.pdf introuvable dans Attestations_sources/. Rechargez votre Amiante.', 'error');
+        return;
+      }
+      const amianteBitmaps = await renderPdfToPageBitmaps(await sourceHandle.getFile());
+
+      // Titre Pro encore présents sur disque (excluant celui qu'on vient de supprimer)
+      const remainingBitmaps = [];
+      for (const tpName of TITRE_PRO_ORDER) {
+        if (tpName === deletedName) continue;
+        const tpPdfHandle = await existsFile(state.attestationsHandle, tpName + '.pdf');
+        if (tpPdfHandle) {
+          const bitmaps = await renderPdfToPageBitmaps(await tpPdfHandle.getFile());
+          remainingBitmaps.push(...bitmaps);
+        }
+      }
+
+      const allBitmaps = [...amianteBitmaps, ...remainingBitmaps];
+      const mergedPdf  = await createMultiPagePdfBlob(allBitmaps);
+      await writeBlobToFile(state.attestationsHandle, 'Attestation Amiante.pdf', mergedPdf);
+
+      // Réécriture des JPEGs numérotés dans le sous-dossier Amiante
+      const amianteFolder = await existsDir(state.attestationsHandle, 'Attestation Amiante');
+      if (amianteFolder) {
+        await clearDirectory(amianteFolder);
+        for (let p = 0; p < allBitmaps.length; p++) {
+          await writeBlobToFile(amianteFolder, `Attestation Amiante_${p + 1}.jpg`, await bitmapToJpegBlob(allBitmaps[p]));
+        }
+      }
+    }
+
+    // =========================================================
+    // MODAL AJOUT RAPIDE (bouton + sur vignette vide)
+    // =========================================================
+    let quickAddTargetDomain = null;
+
+    function openQuickAddModal(baseName) {
+      quickAddTargetDomain = baseName;
+      el.quickAddTitle.textContent = `Ajouter — ${baseName}`;
+
+      // Reset fichier
+      el.quickAddFile.value = '';
+      el.quickAddFileName.style.display = 'none';
+      el.quickAddFileNameText.textContent = '';
+      el.quickAddDropZone.style.borderColor = '#c9defa';
+      el.quickAddDropZone.style.background = '#f0f7ff';
+
+      // Bouton grisé jusqu'au choix d'un fichier
+      el.confirmQuickAddBtn.disabled = true;
+      el.confirmQuickAddBtn.style.background = '#94a3b8';
+      el.confirmQuickAddBtn.style.color = '#fff';
+      el.confirmQuickAddBtn.style.cursor = 'not-allowed';
+      el.confirmQuickAddBtn.style.transform = 'none';
+      el.confirmQuickAddBtn.style.opacity = '1';
+
+      // Grille de cases : tous les domaines, domaine cliqué pré-coché
+      el.quickAddDomains.innerHTML = state.domains.map(domain => `
+        <label class="ltb-checkbox">
+          <input type="checkbox" name="quickDomain" value="${escapeHtml(domain.baseName)}"
+            ${domain.baseName === baseName ? 'checked' : ''}>
+          <span>${escapeHtml(domain.baseName)}</span>
+        </label>`).join('');
+
+      el.quickAddModal.classList.add('is-open');
+      el.quickAddModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeQuickAddModal() {
+      el.quickAddModal.classList.remove('is-open');
+      el.quickAddModal.setAttribute('aria-hidden', 'true');
+      quickAddTargetDomain = null;
+    }
+
+    function applyQuickFile(file) {
+      if (!file) return;
+      el.quickAddFileNameText.textContent = file.name;
+      el.quickAddFileName.style.display = 'flex';
+      el.quickAddDropZone.style.borderColor = '#bbe6ca';
+      el.quickAddDropZone.style.background  = '#eefbf4';
+      el.confirmQuickAddBtn.disabled = false;
+      el.confirmQuickAddBtn.style.background = '#0b63ce';
+      el.confirmQuickAddBtn.style.color = '#fff';
+      el.confirmQuickAddBtn.style.cursor = 'pointer';
+      el.confirmQuickAddBtn.style.transform = '';
+      el.confirmQuickAddBtn.style.opacity = '1';
+    }
+
+    // Clic sur la drop zone → ouvre le picker
+    el.quickAddDropZone.addEventListener('click', () => el.quickAddFile.click());
+
+    // Drag & drop sur la drop zone
+    el.quickAddDropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      el.quickAddDropZone.style.borderColor = '#0b63ce';
+      el.quickAddDropZone.style.background  = '#e0eeff';
+    });
+    el.quickAddDropZone.addEventListener('dragleave', () => {
+      if (!el.quickAddFile.files[0]) {
+        el.quickAddDropZone.style.borderColor = '#c9defa';
+        el.quickAddDropZone.style.background  = '#f0f7ff';
+      }
+    });
+    el.quickAddDropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) { applyQuickFile(file); /* stocker dans un DataTransfer proxy */ el._quickDropFile = file; }
+    });
+
+    el.quickAddFile.addEventListener('change', () => {
+      el._quickDropFile = null;
+      applyQuickFile(el.quickAddFile.files[0]);
+    });
+
+    el.cancelQuickAddBtn.addEventListener('click', closeQuickAddModal);
+
+    el.confirmQuickAddBtn.addEventListener('click', () => {
+      const file = el._quickDropFile || el.quickAddFile.files[0];
+      if (!file) { alert('Veuillez sélectionner un fichier.'); return; }
+
+      const checked = [...el.quickAddDomains.querySelectorAll('input[name="quickDomain"]:checked')]
+        .map(cb => cb.value);
+      if (!checked.length) { alert('Veuillez cocher au moins un domaine.'); return; }
+
+      state.assignments = [{
+        id: crypto.randomUUID(),
+        file,
+        fileName: file.name,
+        fileType: file.type || 'type inconnu',
+        selectedDomains: checked,
+      }];
+
+      try {
+        state.summaryPlan = buildSummaryPlan();
+      } catch (err) { alert(err.message); return; }
+
+      closeQuickAddModal();
+      openConfirmModal();
+    });
+
+    // =========================================================
+    // SUPPRESSION D'UN DOMAINE (PDF racine + JPEGs sous-dossier)
+    // =========================================================
+    async function deleteDomain(baseName) {
+      const TITRE_PRO_NAMES = ['Titre Pro Industrie', 'Titre Pro 46-102', 'Titre Pro Ferroviaire', 'Titre Pro Aeronef'];
+      const isTitrePro = TITRE_PRO_NAMES.includes(baseName);
+
+      const msg = isTitrePro
+        ? `Supprimer "${baseName}" ?\n\nL'Attestation Amiante sera automatiquement refusionnée sans ce Titre Pro.`
+        : `Supprimer "${baseName}" ?\n\nLe PDF et les JPEGs seront effacés définitivement.`;
+
+      if (!confirm(msg)) return;
+
+      try {
+        showLoading(`Suppression de ${baseName}…`);
+        updateLoading(`Suppression de ${baseName}…`, 20);
+
+        // Supprime le PDF racine
+        try { await state.attestationsHandle.removeEntry(baseName + '.pdf'); } catch { /* déjà absent */ }
+
+        // Vide le sous-dossier
+        const folder = await existsDir(state.attestationsHandle, baseName);
+        if (folder) await clearDirectory(folder);
+
+        // Si Titre Pro → refusion de l'Amiante
+        if (isTitrePro) {
+          updateLoading('Refusion de l\'Attestation Amiante…', 50);
+          await refuseAmianteAfterDeletion(baseName);
+        }
+
+        updateLoading('Actualisation…', 90);
+        await scanDomains();
+        updateLoading('Terminé !', 100);
+        await new Promise(r => setTimeout(r, 300));
+        hideLoading();
+        setStatus(`"${baseName}" supprimé${isTitrePro ? ' — Attestation Amiante refusionnée.' : '.'}`, 'success');
+      } catch (err) {
+        hideLoading();
+        setStatus('Erreur lors de la suppression : ' + err.message, 'error');
+      }
+    }
+
+    el.domainList.addEventListener('click', event => {
+      const pdfBtn = event.target.closest('button[data-action="view-pdf"]');
+      if (pdfBtn) { openPdfModal(pdfBtn.dataset.domain); return; }
+
+      const delBtn = event.target.closest('button[data-action="delete-domain"]');
+      if (delBtn) { deleteDomain(delBtn.dataset.domain); return; }
+
+      const addBtn = event.target.closest('button[data-action="quick-add"]');
+      if (addBtn) { openQuickAddModal(addBtn.dataset.domain); }
+    });
+
+    el.closePdfBtn.addEventListener('click', closePdfModal);
+
+    window.addEventListener('beforeunload', revokeAllObjectUrls);
+
+    // =========================================================
+    // BLOC 5 — VALIDER ET TRANSMETTRE
+    // =========================================================
+
+    // Active ou désactive le bouton selon l'état du log de session
+    function refreshValidateBtn() {
+      el.validateBtn.disabled = state.sessionLog.length === 0;
+    }
+
+    function openValidateModal() {
+      const now = new Date().toLocaleString('fr-FR');
+
+      // Construction du corps récapitulatif
+      let bodyHtml = `<div style="font-size:13px; font-weight:700; color:#6b7280; margin-bottom:16px;">Session du ${escapeHtml(now)}</div>`;
+
+      if (!state.sessionLog.length) {
+        bodyHtml += `<div class="ltb-success-item"><span class="ltb-success-item__icon">ℹ️</span><div>Aucune opération enregistrée dans cette session.</div></div>`;
+      } else {
+        state.sessionLog.forEach((entry, idx) => {
+          if (entry.type === 'attestations') {
+            bodyHtml += `
+              <div class="ltb-success-item" style="flex-direction:column; align-items:flex-start;">
+                <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                  <span class="ltb-success-item__icon">📄</span>
+                  <strong>Attestations mises à jour (${escapeHtml(entry.date)})</strong>
+                </div>
+                <div style="padding-left:26px; display:flex; flex-direction:column; gap:6px; width:100%;">
+                  ${entry.domains.map(d => `
+                    <div style="font-size:13px; color:#374151;">
+                      ✅ <strong>${escapeHtml(d.domainName)}</strong> — source : ${escapeHtml(d.fileName)}
+                    </div>`).join('')}
+                </div>
+              </div>`;
+          } else if (entry.type === 'signature') {
+            bodyHtml += `
+              <div class="ltb-success-item">
+                <span class="ltb-success-item__icon">✍️</span>
+                <div><strong>Signature mise à jour</strong><br>
+                  <span style="font-size:13px; color:#6b7280;">${escapeHtml(entry.date)}</span>
+                </div>
+              </div>`;
+          }
+        });
+      }
+
+      el.validateBody.innerHTML = bodyHtml;
+
+      // Construction du mailto
+      const subject = `Validation modifications LICIEL — ${now}`;
+      const lines = [`Bonjour,`, ``, `Les modifications suivantes ont été effectuées le ${now} :`, ``];
+
+      state.sessionLog.forEach(entry => {
+        if (entry.type === 'attestations') {
+          lines.push(`📄 Attestations mises à jour (${entry.date}) :`);
+          entry.domains.forEach(d => lines.push(`   - ${d.domainName} (source : ${d.fileName})`));
+          lines.push('');
+        } else if (entry.type === 'signature') {
+          lines.push(`✍️ Signature mise à jour le ${entry.date}`);
+          lines.push('');
+        }
+      });
+
+      lines.push('Cordialement');
+
+      el.validateMailtoBtn.href =
+        `mailto:lionel.tissotbez@socotec.com` +
+        `?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(lines.join('\n'))}`;
+
+      el.validateModal.classList.add('is-open');
+      el.validateModal.setAttribute('aria-hidden', 'false');
+
+      // Réinitialise le bouton Fermer : inactif jusqu'au clic sur Envoyer
+      el.closeValidateBtn.disabled = true;
+      el.closeValidateBtn.style.opacity = '0.4';
+      el.closeValidateBtn.style.cursor = 'not-allowed';
+    }
+
+    function closeValidateModal() {
+      el.validateModal.classList.remove('is-open');
+      el.validateModal.setAttribute('aria-hidden', 'true');
+    }
+
+    el.validateBtn.addEventListener('click', openValidateModal);
+    el.closeValidateBtn.addEventListener('click', closeValidateModal);
+
+    // Le bouton Fermer ne s'active qu'après que l'opérateur a cliqué sur Envoyer le mail
+    el.validateMailtoBtn.addEventListener('click', () => {
+      el.closeValidateBtn.disabled = false;
+      el.closeValidateBtn.style.opacity = '1';
+      el.closeValidateBtn.style.cursor = 'pointer';
+    });
+
+    // =========================================================
+    // SIGNATURE
+    // =========================================================
+    const loadSigBtn  = document.getElementById('ltbLoadSignature');
+    const sigPreview  = document.getElementById('ltbSignaturePreview');
+    const sigCanvas   = document.getElementById('ltbSignatureCanvas');
+    const sigCtx      = sigCanvas.getContext('2d');
+    let drawing = false;
+
+    async function loadCurrentSignature() {
+      try {
+        if (!state.signaturesHandle) throw new Error('Dossier signatures non accessible');
+        const fileHandle = await state.signaturesHandle.getFileHandle('Signature.jpg');
+        const file = await fileHandle.getFile();
+        const url = URL.createObjectURL(file);
+        sigPreview.innerHTML = `<img src="${url}" style="max-height:100%; max-width:100%; object-fit:contain;"/>`;
+      } catch {
+        sigPreview.innerHTML = '<div class="ltb-domain-card__empty">Signature introuvable</div>';
+      }
+    }
+
+    loadSigBtn.onclick = async () => await loadCurrentSignature();
+
+    sigCtx.fillStyle = '#ffffff';
+    sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+    sigCtx.strokeStyle = '#111111';
+    sigCtx.lineWidth = 2;
+    sigCtx.lineCap = 'round';
+    sigCtx.lineJoin = 'round';
+
+    sigCanvas.addEventListener('pointerdown', e => { e.preventDefault(); drawing = true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX, e.offsetY); });
+    sigCanvas.addEventListener('pointermove', e => { e.preventDefault(); if (!drawing) return; sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke(); });
+    sigCanvas.addEventListener('pointerup',    e => { e.preventDefault(); drawing = false; });
+    sigCanvas.addEventListener('pointerleave', () => drawing = false);
+
+    document.getElementById('ltbClearSignature').onclick = () => {
+      sigCtx.clearRect(0, 0, 350, 210);
+      sigCtx.fillStyle = '#ffffff';
+      sigCtx.fillRect(0, 0, 350, 210);
+    };
+
+    async function saveSignature(blob) {
+      try {
+        // Vide le dossier Signatures pour ne garder que la dernière
+        await clearDirectory(state.signaturesHandle);
+
+        const fileHandle = await state.signaturesHandle.getFileHandle('Signature.jpg', { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        setStatus('Signature enregistrée.', 'success');
+
+        // Alimentation du log de session (bloc 5)
+        state.sessionLog.push({
+          type: 'signature',
+          date: new Date().toLocaleString('fr-FR'),
+        });
+        refreshValidateBtn();
+      } catch (e) {
+        setStatus('Erreur signature : ' + e.message, 'error');
+      }
+    }
+
+    document.getElementById('ltbSaveSignature').onclick = async () => {
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 350; exportCanvas.height = 210;
+      const exportCtx = exportCanvas.getContext('2d', { alpha: false });
+      exportCtx.fillStyle = '#ffffff';
+      exportCtx.fillRect(0, 0, 350, 210);
+      exportCtx.drawImage(sigCanvas, 0, 0);
+      exportCanvas.toBlob(async blob => { await saveSignature(blob); await loadCurrentSignature(); }, 'image/jpeg', 0.92);
+    };
+
+    const importInput = document.getElementById('ltbImportSignature');
+    const cropCanvas  = document.getElementById('ltbCropCanvas');
+    const cropCtx     = cropCanvas.getContext('2d');
+
+    importInput.onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        cropCanvas.style.display = 'block';
+        cropCtx.clearRect(0, 0, 350, 210);
+        cropCtx.drawImage(img, 0, 0, 350, 210);
+        document.getElementById('ltbApplyCrop').style.display = 'inline-block';
+      };
+      img.src = URL.createObjectURL(file);
+    };
+
+    document.getElementById('ltbApplyCrop').onclick = () => {
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 350; exportCanvas.height = 210;
+      const exportCtx = exportCanvas.getContext('2d', { alpha: false });
+      exportCtx.fillStyle = '#ffffff';
+      exportCtx.fillRect(0, 0, 350, 210);
+      exportCtx.drawImage(cropCanvas, 0, 0, 350, 210);
+      exportCanvas.toBlob(async blob => { await saveSignature(blob); await loadCurrentSignature(); }, 'image/jpeg', 0.92);
+    };
+  </script>
+</body>
+</html>
